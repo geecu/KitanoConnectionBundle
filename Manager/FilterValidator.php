@@ -4,8 +4,9 @@ namespace Kitano\ConnectionBundle\Manager;
 
 use Kitano\ConnectionBundle\Exception\InvalidFilterException;
 
+use Kitano\ConnectionBundle\Model\ConnectionInterface;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Validator;
-
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\Constraints\Type;
@@ -23,16 +24,23 @@ class FilterValidator
      */
     public function validateFilters(array &$filters)
     {
+        $direction = new Choice();
+        $direction->choices = array(
+            ConnectionInterface::DIRECTION_ONE_WAY,
+            ConnectionInterface::DIRECTION_TWO_WAYS
+        );
         $filterConstraint = new Collection(array(
-            'type' => array(
-                new NotBlank(),
-                new NotNull(),
-            ),
-            'depth' => new Type('integer'),
-        ));
+                'type' => array(
+                    new NotBlank(),
+                    new NotNull(),
+                ),
+                'direction' => $direction,
+                'depth' => new Type('integer'),
+            ));
 
         $filtersDefault = array(
-            'depth' => 1,
+            'direction' => ConnectionInterface::DIRECTION_TWO_WAYS,
+            'depth' => 1
         );
 
         $filters = array_merge($filtersDefault, $filters);

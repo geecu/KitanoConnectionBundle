@@ -88,16 +88,18 @@ class DoctrineMongoDBConnectionRepository extends DocumentRepository implements 
     {
         $qb = $this->createQueryBuilder('Connection');
 
-        $qb->addOr(
-            $qb->expr()
-                ->field("source")->references($nodeA)
-                ->field("destination")->references($nodeB)
-        )
-        ->addOr(
-            $qb->expr()
-                ->field("source")->references($nodeB)
-                ->field("destination")->references($nodeA)
-        ) ;
+        $sourceAExpr = $qb->expr()
+            ->field("source")->references($nodeA)
+            ->field("destination")->references($nodeB);
+        $sourceBExpr = $qb->expr()
+            ->field("source")->references($nodeB)
+            ->field("destination")->references($nodeA);
+
+        $qb->addOr($sourceAExpr);
+
+        if (!isset($filters['direction']) || $filters['direction'] == ConnectionInterface::DIRECTION_TWO_WAYS) {
+            $qb->addOr($sourceBExpr);
+        }
 
         if (array_key_exists('type', $filters)) {
             $qb->field('type')->equals($filters['type']);

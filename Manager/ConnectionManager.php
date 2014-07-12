@@ -34,9 +34,9 @@ class ConnectionManager implements ConnectionManagerInterface
      * 
      * @throws AlreadyConnectedException When connection from source to destination already exists
      */
-    public function connect(NodeInterface $source, NodeInterface $destination, $type)
+    public function connect(NodeInterface $source, NodeInterface $destination, $type, $direction = ConnectionInterface::DIRECTION_TWO_WAYS)
     {
-        $connection = $this->createConnection($source, $destination, $type);
+        $connection = $this->createConnection($source, $destination, $type, $direction);
         $this->getConnectionRepository()->update($connection);
 
         if ($this->dispatcher) {
@@ -113,11 +113,11 @@ class ConnectionManager implements ConnectionManagerInterface
     /**
      * {@inheritDoc}
      */
-    public function areConnected(NodeInterface $nodeA, NodeInterface $nodeB, array $filters = array())
+    public function areConnected(NodeInterface $nodeA, NodeInterface $nodeB, array $filters = array(), $direction = null)
     {
         $this->filterValidator->validateFilters($filters);
 
-        return $this->getConnectionRepository()->areConnected($nodeA, $nodeB, $filters);
+        return $this->getConnectionRepository()->areConnected($nodeA, $nodeB, $filters, $direction);
     }
     
     /**
@@ -185,9 +185,9 @@ class ConnectionManager implements ConnectionManagerInterface
      * @return \Kitano\ConnectionBundle\Model\ConnectionInterface
      * @throws \Kitano\ConnectionBundle\Exception\AlreadyConnectedException
      */
-    protected function createConnection(NodeInterface $source, NodeInterface $destination, $type)
+    protected function createConnection(NodeInterface $source, NodeInterface $destination, $type, $direction = ConnectionInterface::DIRECTION_TWO_WAYS)
     {
-        if ($this->areConnected($source, $destination, array('type' => $type))) {
+        if ($this->areConnected($source, $destination, array('type' => $type, 'direction' => $direction))) {
             throw new AlreadyConnectedException(
                 sprintf('Objects %s (%s) and %s (%s) are already connected',
                     get_class($source),

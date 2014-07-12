@@ -136,19 +136,26 @@ class DoctrineOrmConnectionRepository extends EntityRepository implements Connec
 
         $queryBuilder = $this->createQueryBuilder('connection');
 
-        $queryBuilder->select('COUNT (connection)')
-            ->where(
-                $queryBuilder->expr()->orX(
-                    $queryBuilder->expr()->andX(
-                        $queryBuilder->expr()->andX("connection.sourceObjectId = :nodeAId", "connection.sourceObjectClass = :nodeAClass"),
-                        $queryBuilder->expr()->andX("connection.destinationObjectId = :nodeBId", "connection.destinationObjectClass = :nodeBClass")
-                    ),
-                    $queryBuilder->expr()->andX(
-                        $queryBuilder->expr()->andX("connection.sourceObjectId = :nodeBId", "connection.sourceObjectClass = :nodeBClass"),
-                        $queryBuilder->expr()->andX("connection.destinationObjectId = :nodeAId", "connection.destinationObjectClass = :nodeAClass")
-                    )
-                )
+        $sourceAExpr = $queryBuilder->expr()->andX(
+            $queryBuilder->expr()->andX("connection.sourceObjectId = :nodeAId", "connection.sourceObjectClass = :nodeAClass"),
+            $queryBuilder->expr()->andX("connection.destinationObjectId = :nodeBId", "connection.destinationObjectClass = :nodeBClass")
+        );
+        $sourceBExpr = $queryBuilder->expr()->andX(
+            $queryBuilder->expr()->andX("connection.sourceObjectId = :nodeBId", "connection.sourceObjectClass = :nodeBClass"),
+            $queryBuilder->expr()->andX("connection.destinationObjectId = :nodeAId", "connection.destinationObjectClass = :nodeAClass")
+        );
+
+        if (!isset($filters['direction']) || $filters['direction'] == ConnectionInterface::DIRECTION_TWO_WAYS) {
+            $whereExpr = $queryBuilder->expr()->orX(
+                $sourceAExpr,
+                $sourceBExpr
             );
+        } else {
+            $whereExpr = $sourceAExpr;
+        }
+
+        $queryBuilder->select('COUNT (connection)')
+            ->where($whereExpr);
         
         $queryBuilder->setParameters(array(
             'nodeAClass' => $nodeAInformations['object_class'],

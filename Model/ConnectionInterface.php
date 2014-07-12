@@ -4,6 +4,9 @@ namespace Kitano\ConnectionBundle\Model;
 
 interface ConnectionInterface
 {
+    const DIRECTION_ONE_WAY = 'one-way';
+    const DIRECTION_TWO_WAYS = 'two-ways';
+
     /**
      * Returns the Node from where the Connection (edge) start
      *

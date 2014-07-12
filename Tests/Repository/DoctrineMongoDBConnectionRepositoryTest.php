@@ -2,6 +2,7 @@
 
 namespace Kitano\ConnectionBundle\Tests\Repository;
 
+use Kitano\ConnectionBundle\Model\ConnectionInterface;
 use Kitano\ConnectionBundle\Repository\DoctrineMongoDBConnectionRepository;
 use Kitano\ConnectionBundle\Model\NodeInterface;
 use Kitano\ConnectionBundle\Tests\MongoDBTestCase;
@@ -195,6 +196,39 @@ class DoctrineMongoDBConnectionRepositoryTest extends MongoDBTestCase implements
         $this->assertTrue($this->repository->areConnected($node1, $node3, array('type' => self::CONNECTION_TYPE)));
         $this->assertTrue($this->repository->areConnected($node3, $node1, array('type' => self::CONNECTION_TYPE)));
         $this->assertFalse($this->repository->areConnected($node2, $node3, array('type' => self::CONNECTION_TYPE)));
+    }
+
+    /**
+     * @group odm
+     */
+    public function testAreConnectedOneWay()
+    {
+        $node1 = new Node(455);
+        $node2 = new Node(4412);
+        $node3 = new Node(4244);
+
+        $this->getDocumentManager()->persist($node1);
+        $this->getDocumentManager()->persist($node2);
+        $this->getDocumentManager()->persist($node3);
+        $this->getDocumentManager()->flush();
+
+        $connection1 = $this->createConnection($node1, $node2, self::CONNECTION_TYPE, ConnectionInterface::DIRECTION_ONE_WAY);
+        $connection2 = $this->createConnection($node2, $node1, self::CONNECTION_TYPE, ConnectionInterface::DIRECTION_ONE_WAY);
+        $connection3 = $this->createConnection($node1, $node3, self::CONNECTION_TYPE, ConnectionInterface::DIRECTION_ONE_WAY);
+
+        $this->repository->update($connection1);
+        $this->repository->update($connection2);
+        $this->repository->update($connection3);
+
+        $filters = array(
+            'type' => self::CONNECTION_TYPE,
+            'direction' => ConnectionInterface::DIRECTION_ONE_WAY
+        );
+        $this->assertTrue($this->repository->areConnected($node1, $node2, $filters));
+        $this->assertTrue($this->repository->areConnected($node2, $node1, $filters));
+        $this->assertTrue($this->repository->areConnected($node1, $node3, $filters));
+        $this->assertFalse($this->repository->areConnected($node2, $node3, $filters));
+        $this->assertFalse($this->repository->areConnected($node3, $node1, $filters));
     }
 
     /**
