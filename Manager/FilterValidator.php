@@ -46,7 +46,7 @@ class FilterValidator
         }
     }
 
-    public function setValidator(Validator $validator)
+    public function setValidator(Validator\LegacyValidator $validator)
     {
         $this->validator = $validator;
     }
